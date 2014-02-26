@@ -1,0 +1,7 @@
+# project settings
+*.root
+*.log
+*.o
+test_spectrum
+#
+*.pyc

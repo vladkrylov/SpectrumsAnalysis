@@ -1,0 +1,8 @@
+DATADIR=data
+NUMBER_OF_SPECTRUMS=5
+DATAFILES:
+d1.txt
+d2.txt
+d3.txt
+d4.txt
+d5.txt
