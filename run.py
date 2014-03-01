@@ -14,16 +14,25 @@ config_file.write('DATADIR=' + datadir[1:] + '\n')
 
 files = listdir(gdatadir)
 datafiles = []
+datafiles1 = []
 number_of_spectrums = 0
 
 for fname in files:
-    if fname[0] == 'd' and fname[-4:] == '.txt' and fname[1:-4].isdigit():
+    if fname[0] == 'd' and fname[-4:] == '.txt' and fname[1:-4].isdigit() and len(fname) == 6:
         datafiles.append(fname)
         number_of_spectrums += 1
+datafiles.sort()
+
+for fname in files:
+    if fname[0] == 'd' and fname[-4:] == '.txt' and fname[1:-4].isdigit() and len(fname) == 7:
+        datafiles1.append(fname)
+        number_of_spectrums += 1
+datafiles1.sort()
+datafiles.extend(datafiles1)
         
 config_file.write("NUMBER_OF_SPECTRUMS=" + str(number_of_spectrums) +"\n")
         
-datafiles.sort()
+
 config_file.write("DATAFILES:\n")
 for fname in datafiles:
     config_file.write(fname + '\n')

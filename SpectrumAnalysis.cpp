@@ -7,6 +7,7 @@
 
 #include "SpectrumAnalysis.h"
 #include "stdlib.h"
+#include "TMath.h"
 
 SpectrumAnalysis::SpectrumAnalysis(string configurationFile)
 {
@@ -15,8 +16,12 @@ SpectrumAnalysis::SpectrumAnalysis(string configurationFile)
 	LoadConfigData(configurationFile);
 	LoadSpectrumData();
 
-	FitAll();
-	WriteAll();
+	centers = new double*[model->GetNumberOfPeaks()];
+	amplitudes = new double*[model->GetNumberOfPeaks()];
+	for(int i=0; i<model->GetNumberOfPeaks(); i++) {
+		centers[i] = new double[numberOfSpectrums];
+		amplitudes[i] = new double[numberOfSpectrums];
+	}
 }
 
 SpectrumAnalysis::~SpectrumAnalysis() {
@@ -24,6 +29,13 @@ SpectrumAnalysis::~SpectrumAnalysis() {
 		delete [] allSpectrums[i];
 	}
 	delete [] allSpectrums;
+
+	for(int i = 0 ;i < model->GetNumberOfPeaks() ; i++) {
+		delete [] centers[i];
+		delete [] amplitudes[i];
+	}
+	delete [] centers;
+	delete [] amplitudes;
 
 	delete [] dataFileNames;
 
@@ -92,8 +104,6 @@ void SpectrumAnalysis::LoadSpectrumData()
 	allSpectrums = new Spectrum*[numberOfSpectrums];
 	for (int i = 0; i < numberOfSpectrums; ++i) {
 		allSpectrums[i] = new Spectrum(dataPath + "/x.txt", dataPath + "/" + dataFileNames[i]);
-//		allSpectrums[i]->Fit(model);
-//		allSpectrums[i]->Write();
 	}
 }
 
@@ -110,3 +120,72 @@ void SpectrumAnalysis::WriteAll()
 		allSpectrums[i]->Write();
 	}
 }
+
+void SpectrumAnalysis::Analyze()
+{
+	double t_mean = 0.;
+	double t_disp = 0.;
+	double k = 0.;
+
+	for (int i = 0; i < 10; ++i) {
+		FitAll();
+		GetFitResults();
+		k = 0.;
+		for (int j = 0; j < model->GetNumberOfPeaks(); ++j) {
+
+			t_mean = saMean(centers[j], numberOfSpectrums);
+			t_disp = saDisp(centers[j], numberOfSpectrums);
+			if (t_disp > 30.) {
+				cout << "!------------------ Peak "<< j+1 <<"------------------!"<< endl;
+				k = 1.;
+
+				for (int sp = 0; sp < numberOfSpectrums; ++sp) {
+					cout << centers[j][sp] << endl;
+				}
+				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
+				cout << "!------------------------------------!"<< endl;
+
+				model->SetMeanLimits(j, t_mean - k * t_disp/(i+1), t_mean + k * t_disp/(i+1));
+			} else {
+				k++;
+				cout << "!------------------ Peak "<< j+1 <<"------------------!"<< endl;
+				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
+			}
+		}
+		if (k==3.) break;
+	}
+
+	WriteAll();
+}
+
+void SpectrumAnalysis::GetFitResults()
+{
+	for (int p = 0; p < model->GetNumberOfPeaks(); ++p) {
+		for (int sp = 0; sp < numberOfSpectrums; ++sp) {
+			amplitudes[p][sp] = allSpectrums[sp]->GetAmp(p);
+			centers[p][sp] = allSpectrums[sp]->GetMean(p);
+		}
+	}
+}
+
+double SpectrumAnalysis::saMean(const double* array, int size)
+{
+	double sum = 0;
+	for (int i = 0; i < size; ++i) {
+		sum += array[i];
+	}
+	return sum/size;
+}
+
+double SpectrumAnalysis::saDisp(const double* array, int size)
+{
+	double sum = 0;
+	double xc = saMean(array, size);
+	for (int i = 0; i < size; ++i) {
+		sum += (array[i] - xc) * (array[i] - xc);
+	}
+	return TMath::Sqrt(sum/size);
+}
+
+
+

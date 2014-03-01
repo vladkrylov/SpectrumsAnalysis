@@ -272,3 +272,30 @@ double* MathModel::GetInitParameters()
 	}
 	return res;
 }
+
+void MathModel::SetAmpLimits(int i, double min, double max)
+{
+	if ((i>0) && (i<numberOfPeaks)) {
+		amp_min[i] = min;
+		amp_max[i] = max;
+		amp_init[i] = (min + max)/2;
+	}
+}
+
+void MathModel::SetMeanLimits(int i, double min, double max)
+{
+	if ((i>=0) && (i<numberOfPeaks)) {
+		mean_min[i] = min;
+		mean_max[i] = max;
+		mean_init[i] = (min + max)/2;
+	}
+}
+
+void MathModel::SetSigmaLimits(int i, double min, double max)
+{
+	if ((i>0) && (i<numberOfPeaks)) {
+		sigma_min[i] = min;
+		sigma_max[i] = max;
+		sigma_init[i] = (min + max)/2;
+	}
+}

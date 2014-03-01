@@ -12,6 +12,7 @@
 #include "Riostream.h"
 #include "TGraph.h"
 #include "MathModel.h"
+#include "TF1.h"
 
 class Spectrum {
 public:
@@ -24,11 +25,16 @@ public:
 
 	void Fit(MathModel* );
 	void Write();
+
+	double GetAmp(int);
+	double GetMean(int);
+
 private:
 	vector<double> x;
 	vector<double> y;
 	unsigned int numberOfPoints;
 	TGraph *gr;
+	TF1 *ftot;
 
 	void FillX(string);
 	void FillY(string);

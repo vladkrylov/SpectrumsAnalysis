@@ -6,7 +6,6 @@
  */
 
 #include "Spectrum.h"
-#include "TF1.h"
 #include "TMath.h"
 
 Spectrum::Spectrum() {
@@ -83,7 +82,7 @@ void Spectrum::Fit(MathModel* model)
 {
 	double f_min = x[0];
 	double f_max = x[numberOfPoints-1];
-	TF1 *ftot = new TF1("ftot",model->GetModel(),f_min,f_max);
+	ftot = new TF1("ftot",model->GetModel(),f_min,f_max);
 
 	for (int i = 0; i < model->GetNumberOfPeaks(); ++i) {
 		ftot->SetParLimits(3*i,   model->GetMinAmp(i),   model->GetMaxAmp(i));
@@ -93,10 +92,20 @@ void Spectrum::Fit(MathModel* model)
 
 //	ftot->SetRange(4004,6000);
 	ftot->SetParameters(model->GetInitParameters());
-	gr->Fit("ftot","bR");
+	gr->Fit("ftot","qbR");
 
 	Double_t area =  ftot->GetParameter(0) * TMath::Sqrt(2*TMath::Pi()) * (ftot->GetParameter(2));
 
-	cout << area << endl;
+//	cout << area << endl;
+}
+
+double Spectrum::GetAmp(int peakId)
+{
+	return ftot->GetParameter(3*peakId);
+}
+
+double Spectrum::GetMean(int peakId)
+{
+	return ftot->GetParameter(3*peakId+1);
 }
 

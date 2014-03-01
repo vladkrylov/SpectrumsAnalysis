@@ -18,6 +18,8 @@ public:
 	SpectrumAnalysis(string);
 	virtual ~SpectrumAnalysis();
 
+	void Analyze();
+
 private:
 	string dataPath;
 	int numberOfSpectrums;
@@ -26,11 +28,19 @@ private:
 	TFile *f_out;
 	MathModel* model;
 
+	double** amplitudes;
+	double** centers;
+
 	void LoadConfigData(string);
 	void LoadSpectrumData();
 
 	void FitAll();
 	void WriteAll();
+
+	void GetFitResults();
+
+	double saMean(const double* , int );
+	double saDisp(const double* , int );
 };
 
 #endif /* SPECTRUMANALYSIS_H_ */

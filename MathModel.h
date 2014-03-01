@@ -27,6 +27,10 @@ public:
 
 	double* GetInitParameters();
 
+	void SetAmpLimits(int, double, double);
+	void SetMeanLimits(int, double, double);
+	void SetSigmaLimits(int, double, double);
+
 private:
 	int numberOfPeaks;
 
