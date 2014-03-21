@@ -30,11 +30,13 @@ public:
 	double GetMean(int);
 
 private:
+	int nop;
 	vector<double> x;
 	vector<double> y;
 	unsigned int numberOfPoints;
 	TGraph *gr;
 	TF1 *ftot;
+	TF1** fpart;
 
 	void FillX(string);
 	void FillY(string);

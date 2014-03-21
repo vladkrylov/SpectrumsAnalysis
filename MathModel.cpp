@@ -179,7 +179,7 @@ MathModel::MathModel(string confile) {
 	}
 
 	modelName = "gaus(0)";
-	char* temp_str;
+	char temp_str[2];
 	for (int i = 1; i < numberOfPeaks; ++i) {
 		sprintf(temp_str, "%d", 3*i);
 		modelName += string("+gaus(")  + string(temp_str) + string(")");

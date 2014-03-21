@@ -125,34 +125,37 @@ void SpectrumAnalysis::Analyze()
 {
 	double t_mean = 0.;
 	double t_disp = 0.;
-	double k = 0.;
+	int  k = 0;
 
 	for (int i = 0; i < 10; ++i) {
 		FitAll();
 		GetFitResults();
-		k = 0.;
+		k = 0;
 		for (int j = 0; j < model->GetNumberOfPeaks(); ++j) {
 
 			t_mean = saMean(centers[j], numberOfSpectrums);
 			t_disp = saDisp(centers[j], numberOfSpectrums);
 			if (t_disp > 30.) {
-				cout << "!------------------ Peak "<< j+1 <<"------------------!"<< endl;
-				k = 1.;
+				cout << "!------------------ Peak "<< j+1 <<" ------------------!"<< endl;
+				k = 1;
+
+				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
+				cout << "!------------------------------------!"<< endl;
 
 				for (int sp = 0; sp < numberOfSpectrums; ++sp) {
 					cout << centers[j][sp] << endl;
 				}
-				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
-				cout << "!------------------------------------!"<< endl;
-
 				model->SetMeanLimits(j, t_mean - k * t_disp/(i+1), t_mean + k * t_disp/(i+1));
 			} else {
 				k++;
 				cout << "!------------------ Peak "<< j+1 <<"------------------!"<< endl;
 				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
+				for (int sp = 0; sp < numberOfSpectrums; ++sp) {
+					cout << centers[j][sp] << endl;
+				}
 			}
 		}
-		if (k==3.) break;
+		if (k==model->GetNumberOfPeaks()) break;
 	}
 
 	WriteAll();

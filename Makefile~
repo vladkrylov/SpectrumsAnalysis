@@ -8,17 +8,13 @@ ROOTLIBS  = $(shell root-config --libs)
 all:$(Target)
 
 test_spectrum: main.cpp $(Objects)
-	g++ -o $@ main.cpp $(Objects) $(ROOTFLAGS) $(ROOTLIBS)
+        g++ -o $@ main.cpp $(Objects) $(ROOTFLAGS) $(ROOTLIBS)
 
 Spectrum.o: Spectrum.cpp Spectrum.h
-	g++ -o $@ Spectrum.cpp -c $(ROOTFLAGS)
+        g++ -o $@ Spectrum.cpp -c $(ROOTFLAGS)
 
 SpectrumAnalysis.o: SpectrumAnalysis.cpp SpectrumAnalysis.h
-	g++ -o $@ SpectrumAnalysis.cpp -c $(ROOTFLAGS)
+        g++ -o $@ SpectrumAnalysis.cpp -c $(ROOTFLAGS)
 
 MathModel.o: MathModel.cpp MathModel.h
-	g++ -o $@ MathModel.cpp -c $(ROOTFLAGS)
-
-clean:
-	rm -f $(Objects) $(Target)
-	@echo "Sector clear!"
+        g++ -o $@ MathModel.cpp -c $(ROOTFLAGS)

@@ -19,7 +19,15 @@ Spectrum::Spectrum(string xd, string yd)
 }
 
 Spectrum::~Spectrum() {
-	// TODO Auto-generated destructor stub
+	delete[] gr;
+	delete[] ftot;
+
+	if (nop > 0) {
+		for (int i = 0; i < nop; ++i) {
+			delete[] fpart[i];
+		}
+		delete[] fpart;
+	}
 }
 
 void Spectrum::Test()
@@ -29,6 +37,8 @@ void Spectrum::Test()
 
 void Spectrum::Init(string xd, string yd)
 {
+	nop = 0;
+
 	FillX(xd);
 	FillY(yd);
 
@@ -80,11 +90,16 @@ void Spectrum::Write()
 
 void Spectrum::Fit(MathModel* model)
 {
+	nop = model->GetNumberOfPeaks();
 	double f_min = x[0];
 	double f_max = x[numberOfPoints-1];
 	ftot = new TF1("ftot",model->GetModel(),f_min,f_max);
+	fpart = new TF1*[nop];
+	for (int i = 0; i < nop; ++i) {
+		fpart[i] = new TF1("fpart", "gaus", f_min, f_max);
+	}
 
-	for (int i = 0; i < model->GetNumberOfPeaks(); ++i) {
+	for (int i = 0; i < nop; ++i) {
 		ftot->SetParLimits(3*i,   model->GetMinAmp(i),   model->GetMaxAmp(i));
 		ftot->SetParLimits(3*i+1, model->GetMinMean(i),  model->GetMaxMean(i));
 		ftot->SetParLimits(3*i+2, model->GetMinSigma(i), model->GetMaxSigma(i));
