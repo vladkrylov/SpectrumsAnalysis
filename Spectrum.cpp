@@ -7,18 +7,23 @@
 
 #include "Spectrum.h"
 #include "TMath.h"
+#include "TString.h"
+#include "TAxis.h"
 
 Spectrum::Spectrum() {
 	// TODO Auto-generated constructor stub
 
 }
 
-Spectrum::Spectrum(string xd, string yd)
+Spectrum::Spectrum(int spectrumTime, string sp_data)
 {
-	Init(xd, yd);
+	spectrum_time = spectrumTime;
+	Init(sp_data);
 }
 
 Spectrum::~Spectrum() {
+	delete[] c;
+	delete[] legend;
 	delete[] gr;
 	delete[] ftot;
 
@@ -28,6 +33,7 @@ Spectrum::~Spectrum() {
 		}
 		delete[] fpart;
 	}
+	delete[] params;
 }
 
 void Spectrum::Test()
@@ -35,12 +41,11 @@ void Spectrum::Test()
 	cout << numberOfPoints << endl;
 }
 
-void Spectrum::Init(string xd, string yd)
+void Spectrum::Init(string yd)
 {
 	nop = 0;
 
-	FillX(xd);
-	FillY(yd);
+	Fill(yd);
 
 	size_t xs = x.size();
 	size_t ys = y.size();
@@ -75,6 +80,20 @@ void Spectrum::FillY(string ydata)
 	in.clear();
 }
 
+void Spectrum::Fill(string data)
+{
+	double a, b;
+	ifstream in;
+
+	in.open(data.c_str());
+	while (in >> a >> b) {
+		x.push_back(a);
+		y.push_back(b);
+	}
+	in.close();
+	in.clear();
+}
+
 size_t Spectrum::Min(size_t a, size_t b)
 {
 	if (a < b)
@@ -85,7 +104,44 @@ size_t Spectrum::Min(size_t a, size_t b)
 
 void Spectrum::Write()
 {
-	gr->Write();
+	name = "Time = " + string(Form("%d", spectrum_time)) + " hours";
+
+	c = new TCanvas(name.c_str(),name.c_str(),800,600);
+	legend = new TLegend(.75,.80,.95,.95);
+
+//	gr->SetTitle(name.c_str());
+	gr->SetTitle("");
+	gr->GetXaxis()->SetTitle("Wavelength, nm");
+	gr->GetYaxis()->SetTitle("Amplitude, arbitrary units");
+	gr->Draw("AC");
+	legend->AddEntry(gr, "Experimental data", "L");
+	legend->AddEntry(ftot, "Summary fit", "L");
+
+	int dataToLegend = 0;
+	string writeToLegend;
+	for (int i = 0; i < nop; ++i) {
+		fpart[i]->SetLineColor(3+i);
+		fpart[i]->SetLineStyle(2);
+		fpart[i]->Draw("ACsame");
+
+		dataToLegend = fpart[i]->GetParameter(1);
+		writeToLegend = string(Form("%i", dataToLegend)) + " nm";
+		legend->AddEntry(fpart[i], writeToLegend.c_str(), "L");
+	}
+	legend->Draw();
+
+	c->Write();
+}
+
+void Spectrum::WriteToPDF(string pdfname, char mode)
+{
+	string pdfBookmarkName = "Title:" + name;
+	if (mode == 'o') {
+		pdfname += "(";
+	} else if (mode == 'f') {
+		pdfname += ")";
+	}
+	c->Print(pdfname.c_str(), pdfBookmarkName.c_str());
 }
 
 void Spectrum::Fit(MathModel* model)
@@ -98,6 +154,7 @@ void Spectrum::Fit(MathModel* model)
 	for (int i = 0; i < nop; ++i) {
 		fpart[i] = new TF1("fpart", "gaus", f_min, f_max);
 	}
+	params = new double[3*nop];
 
 	for (int i = 0; i < nop; ++i) {
 		ftot->SetParLimits(3*i,   model->GetMinAmp(i),   model->GetMaxAmp(i));
@@ -107,9 +164,19 @@ void Spectrum::Fit(MathModel* model)
 
 //	ftot->SetRange(4004,6000);
 	ftot->SetParameters(model->GetInitParameters());
-	gr->Fit("ftot","qbR");
+	for (int i = 0; i < 10; ++i) {
+		gr->Fit("ftot","qbR");
+	}
 
-	Double_t area =  ftot->GetParameter(0) * TMath::Sqrt(2*TMath::Pi()) * (ftot->GetParameter(2));
+	ftot->GetParameters(params);
+	for (int i = 0; i < nop; ++i) {
+		fpart[i]->SetParameters(&params[3*i]);
+	}
+
+	fullArea = 0;
+	for (int i = 0; i < nop; ++i) {
+		fullArea += GetArea(i);
+	}
 
 //	cout << area << endl;
 }
@@ -124,3 +191,12 @@ double Spectrum::GetMean(int peakId)
 	return ftot->GetParameter(3*peakId+1);
 }
 
+double Spectrum::GetArea(int peakId)
+{
+	return ftot->GetParameter(3*peakId) * TMath::Sqrt(2*TMath::Pi()) * (ftot->GetParameter(3*peakId+2));
+}
+
+double Spectrum::GetPartialArea(int peakId)
+{
+	return GetArea(peakId) / fullArea;
+}

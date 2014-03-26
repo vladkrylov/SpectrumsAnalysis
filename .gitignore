@@ -2,6 +2,8 @@
 *.root
 *.log
 *.o
+*.pdf
+*project
 test_spectrum
 #
 *.pyc

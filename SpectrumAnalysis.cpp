@@ -18,9 +18,15 @@ SpectrumAnalysis::SpectrumAnalysis(string configurationFile)
 
 	centers = new double*[model->GetNumberOfPeaks()];
 	amplitudes = new double*[model->GetNumberOfPeaks()];
+	partialAreas = new double*[model->GetNumberOfPeaks()];
+
+	resGraphs = new TGraph*[model->GetNumberOfPeaks()];
 	for(int i=0; i<model->GetNumberOfPeaks(); i++) {
 		centers[i] = new double[numberOfSpectrums];
 		amplitudes[i] = new double[numberOfSpectrums];
+		partialAreas[i] = new double[numberOfSpectrums];
+
+		resGraphs[i] = new TGraph();
 	}
 }
 
@@ -30,12 +36,18 @@ SpectrumAnalysis::~SpectrumAnalysis() {
 	}
 	delete [] allSpectrums;
 
-	for(int i = 0 ;i < model->GetNumberOfPeaks() ; i++) {
+	for(int i = 0; i < model->GetNumberOfPeaks() ; i++) {
 		delete [] centers[i];
 		delete [] amplitudes[i];
+		delete [] partialAreas[i];
+
+		delete [] resGraphs[i];
 	}
 	delete [] centers;
 	delete [] amplitudes;
+	delete [] partialAreas;
+
+	delete [] resGraphs;
 
 	delete [] dataFileNames;
 
@@ -103,7 +115,7 @@ void SpectrumAnalysis::LoadSpectrumData()
 	model = new MathModel("model");
 	allSpectrums = new Spectrum*[numberOfSpectrums];
 	for (int i = 0; i < numberOfSpectrums; ++i) {
-		allSpectrums[i] = new Spectrum(dataPath + "/x.txt", dataPath + "/" + dataFileNames[i]);
+		allSpectrums[i] = new Spectrum(times[i], dataPath + "/" + dataFileNames[i]);
 	}
 }
 
@@ -114,10 +126,20 @@ void SpectrumAnalysis::FitAll()
 	}
 }
 
-void SpectrumAnalysis::WriteAll()
+void SpectrumAnalysis::WriteAll(string pdfname)
 {
 	for (int i = 0; i < numberOfSpectrums; ++i) {
 		allSpectrums[i]->Write();
+	}
+	allSpectrums[0]->WriteToPDF(pdfname, 'o');
+	for (int i = 1; i < numberOfSpectrums-1; ++i) {
+		allSpectrums[i]->WriteToPDF(pdfname);
+	}
+	allSpectrums[numberOfSpectrums-1]->WriteToPDF(pdfname, 'f');
+
+	for (int p = 0; p < model->GetNumberOfPeaks()-1; ++p) {
+		resGraphs[p]->Write();
+//		resGraphs[p]->Print(pdfname, Form("Graph"));
 	}
 }
 
@@ -135,30 +157,22 @@ void SpectrumAnalysis::Analyze()
 
 			t_mean = saMean(centers[j], numberOfSpectrums);
 			t_disp = saDisp(centers[j], numberOfSpectrums);
-			if (t_disp > 30.) {
-				cout << "!------------------ Peak "<< j+1 <<" ------------------!"<< endl;
+			if (t_disp > 1.) {
 				k = 1;
-
-				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
-				cout << "!------------------------------------!"<< endl;
-
-				for (int sp = 0; sp < numberOfSpectrums; ++sp) {
-					cout << centers[j][sp] << endl;
-				}
 				model->SetMeanLimits(j, t_mean - k * t_disp/(i+1), t_mean + k * t_disp/(i+1));
 			} else {
 				k++;
-				cout << "!------------------ Peak "<< j+1 <<"------------------!"<< endl;
-				cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
-				for (int sp = 0; sp < numberOfSpectrums; ++sp) {
-					cout << centers[j][sp] << endl;
-				}
+			}
+			cout << "!------------------ Peak "<< j+1 <<"------------------!"<< endl;
+			cout << "---------- Mean: "<< t_mean <<"---------- Disp: "<< t_disp << endl;
+			for (int sp = 0; sp < numberOfSpectrums; ++sp) {
+				cout << centers[j][sp] << endl;
 			}
 		}
 		if (k==model->GetNumberOfPeaks()) break;
 	}
 
-	WriteAll();
+	WriteAll("results.pdf");
 }
 
 void SpectrumAnalysis::GetFitResults()
@@ -167,6 +181,9 @@ void SpectrumAnalysis::GetFitResults()
 		for (int sp = 0; sp < numberOfSpectrums; ++sp) {
 			amplitudes[p][sp] = allSpectrums[sp]->GetAmp(p);
 			centers[p][sp] = allSpectrums[sp]->GetMean(p);
+			partialAreas[p][sp] = allSpectrums[sp]->GetPartialArea(p);
+
+			resGraphs[p]->SetPoint(sp, times[sp], partialAreas[p][sp]);
 		}
 	}
 }
