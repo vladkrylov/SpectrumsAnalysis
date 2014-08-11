@@ -1,7 +1,7 @@
 Run from console:
 ./run.py
 
-Imput data:
+Input data:
 - spectrums: in folder data
   - data/x.txt - common for all spectrums vector of x coordinates
   - data/d*.txt - vectors of y coordinates
